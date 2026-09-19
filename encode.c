@@ -94,7 +94,7 @@ uint get_file_size(FILE *fptr)
 Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
 {
     //check ".bmp" exatention at last
-    char *dot=strchr(argv[2],'.');
+    char *dot=strrchr(argv[2],'.');
     if(dot==NULL || strcmp(dot,".bmp")!=0)
     {
         printf("\nSource image file extention should me \".bmp\"..\n");
@@ -212,14 +212,14 @@ Status do_encoding(EncodeInfo *encInfo)
     }
 
     // copy remaining img data
-    if(copy_remaining_img_data(encInfo->fptr_secret ,encInfo->fptr_stego_image)==e_failure)
+    if(copy_remaining_img_data(encInfo->fptr_src_image ,encInfo->fptr_stego_image)==e_failure)
     {
         printf("\nError : unable to copy remaining image data..\n");
         return e_failure;   
     }
 
 
-    printf("\nEncoded successfully...\n");
+    printf("\nEncoded successfuly...\n");
     return e_success;
 }
 
@@ -309,7 +309,7 @@ Status encode_byte_to_lsb(char data, char *image_buffer)
 Status encode_secret_file_extn_size(EncodeInfo *encInfo)
 {
     
-    char *dot = strchr(encInfo->secret_fname,'.');
+    char *dot = strrchr(encInfo->secret_fname,'.');
     strcpy(encInfo->extn_secret_file,dot);
 
     char buffer[32];
@@ -403,7 +403,7 @@ Status encode_secret_file_data(EncodeInfo *encInfo)
         encode_byte_to_lsb(data,buffer);
 
         // read 8 bytes from buffer to output file
-        fread(buffer,8,1,encInfo->fptr_stego_image);
+        fwrite(buffer,8,1,encInfo->fptr_stego_image);
     }
 
     printf("\nSecret file data encoded successfully...\n");
