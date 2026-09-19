@@ -23,7 +23,7 @@ int main(int argc,char *argv[])
         return 0;
     }
 
-    do_encoding(encInfo);
+    do_encoding(&encInfo);
 
     return 0;
 }
@@ -32,7 +32,7 @@ OperationType check_operation_type(char opt)
 {
     if(opt=='e')
     {
-        return e_encide;
+        return e_encode;
     }
     else if(opt=='d')
     {
