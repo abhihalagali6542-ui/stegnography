@@ -2,6 +2,7 @@
 #include<string.h>
 #include "encode.h"
 #include "types.h"
+#include"common.h"
 
 /* Function Definitions */
 
@@ -20,14 +21,25 @@ uint get_image_size_for_bmp(FILE *fptr_image)
 
     // Read the width (an int)
     fread(&width, sizeof(int), 1, fptr_image);
-    printf("width = %u\n", width);
+    printf("\nImage width = %u\n", width);
 
     // Read the height (an int)
     fread(&height, sizeof(int), 1, fptr_image);
-    printf("height = %u\n", height);
+    printf("\nImage height = %u\n", height);
 
     // Return image capacity
+    printf("\nImage Capacity = %u\n",width * height * 3);
     return width * height * 3;
+}
+
+uint get_file_size(FILE *fptr)
+{
+    //move the offset to last pos
+    fseek(fptr,0,SEEK_END);
+
+    //return ftell()
+    printf("\nFile size = %lu\n",ftell(fptr));
+    return ftell(fptr);
 }
 
 /* 
@@ -110,7 +122,7 @@ Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
         return e_failure;
     }
 
-    printf("\nAll validation are passed...\n");
+    printf("\nAll validation are passed successfully...\n");
     return e_success;
 }
 
@@ -142,7 +154,7 @@ Status open_files(EncodeInfo *encInfo)
         return e_failure;
     }
 
-    printf("\nFiles successfully opened...\n");
+    printf("\nFiles opened successfully...\n");
     return e_success;
 }
 
@@ -207,7 +219,7 @@ Status do_encoding(EncodeInfo *encInfo)
     }
 
 
-    printf("\nsuccessfully Encoded...\n");
+    printf("\nEncoded successfully...\n");
     return e_success;
 }
 
@@ -229,15 +241,6 @@ Status check_capacity(EncodeInfo *encInfo)
 
     //printf("\n...\n");
     return e_success;
-}
-
-uint get_file_size(FILE *fptr)
-{
-    //move the offset to last pos
-    fseek(fptr,0,SEEK_END);
-
-    //return ftell()
-    return ftell(fptr);
 }
 
 //-------------------------------------------------------------------------------//
@@ -277,7 +280,7 @@ Status encode_magic_string(const char *magic_string, EncodeInfo *encInfo)
         fwrite(image_buffer,8,1,encInfo->fptr_stego_image);
     }
     
-    printf("\nMagic string successfully encoded...\n");
+    printf("\nMagic string encoded successfully...\n");
     return e_success;
 }
 
@@ -285,16 +288,16 @@ Status encode_magic_string(const char *magic_string, EncodeInfo *encInfo)
 
 Status encode_byte_to_lsb(char data, char *image_buffer)
 {
-    for(int i=7;i>=0;i++)
+    for(int i=7;i>=0;i--)
     {
         // get the ith bit set or not
         if((data>>i)&1) // set the lSB of image_buffer[]
         {
-            image_buffer[7-i]=image_buffer[7-1] | 1;
+            image_buffer[7-i]=image_buffer[7-i] | 1;
         }
         else // clear the lSB of image_buffer[]
         {
-            image_buffer[7-i]=image_buffer[7-i] & 0;
+            image_buffer[7-i]=image_buffer[7-i] & ~1;
         }
     }
 
@@ -332,16 +335,16 @@ Status encode_secret_file_extn_size(EncodeInfo *encInfo)
 
 Status encode_size_to_lsb(int size, char *image_buffer)
 {
-    for(int i=31;i>=0;i++)
+    for(int i=31;i>=0;i--)
     {
         // get the ith bit set or not
         if((size>>i)&1) // set the lSB of image_buffer[]
         {
-            image_buffer[32-i]= image_buffer[32-i] | 1;
+            image_buffer[31-i]= image_buffer[31-i] | 1;
         }
         else  // clear the lSB of image_buffer[]
         {
-            image_buffer[32-i]= image_buffer[32-i] & 0;
+            image_buffer[31-i]= image_buffer[31-i] & ~1;
         }
     }
       
@@ -378,7 +381,7 @@ Status encode_secret_file_size(int file_size, EncodeInfo *encInfo)
     fread(buffer,32,1,encInfo->fptr_src_image);
 
     // encode size to lsb
-    encode_size_to_lsb(strlen(file_size),buffer);
+    encode_size_to_lsb(file_size,buffer);
 
     // read 32 bytes from buffer to output file
     fwrite(buffer,32,1,encInfo->fptr_stego_image);
@@ -391,16 +394,19 @@ Status encode_secret_file_data(EncodeInfo *encInfo)
     char buffer[8];
     char data;
     
-    while(fread(&data,1,1,encInfo->fptr_secret)!=EOF)
+    while(fread(&data,1,1,encInfo->fptr_secret)==1)
     {
-        // read 8 bytes from src_file
+        // read 8 bytes from src_file to buffer
         fread(buffer,8,1,encInfo->fptr_src_image);
 
         // encode_byte_to_lsb(data,buffer)
         encode_byte_to_lsb(data,buffer);
+
+        // read 8 bytes from buffer to output file
+        fread(buffer,8,1,encInfo->fptr_stego_image);
     }
 
-    printf("\nSecret file data successfully encoded...\n");
+    printf("\nSecret file data encoded successfully...\n");
     return e_success;
 }
 
@@ -409,10 +415,11 @@ Status copy_remaining_img_data(FILE *fptr_src, FILE *fptr_dest)
     char data;
 
     //read char from src_file and write to output_file untill EOF
-    while(fread(&data,1,1,fptr_src)!=EOF)
+    while(fread(&data,1,1,fptr_src)==1)
     {
-        fwrite(data,1,1,fptr_dest);
+        fwrite(&data,1,1,fptr_dest);
     }
 
+    printf("\ncopied remaining img data successfully...\n");
     return e_success;
 }
