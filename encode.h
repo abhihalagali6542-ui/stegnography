@@ -107,10 +107,10 @@ Status decode_magic_string(const char *magic_string, EncodeInfo *encInfo);
 Status decode_secret_file_extn_size( EncodeInfo *encInfo);
 
 /* Decode secret file extenstion */
-Status decode_secret_file_extn(const char *file_extn, EncodeInfo *encInfo);
+Status decode_secret_file_extn(EncodeInfo *encInfo);
 
 /* Decode secret file size */
-Status decode_secret_file_size(int file_size, EncodeInfo *encInfo);
+Status decode_secret_file_size(EncodeInfo *encInfo);
 
 /* Decode secret file data*/
 Status decode_secret_file_data(EncodeInfo *encInfo);

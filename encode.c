@@ -67,8 +67,8 @@ Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
         {
             printf("\nInvalid input\n");
             printf("\n-------- SAMPLE INPUTS --------\n");
-            printf("\n./a.out -e source_file.bmp secret_file.txt [output_file(.bmp .py .txt)]\n");
-            printf("./a.out -d source_file.bmp [output_file(.bmp .py .txt)]\n");
+            printf("\n./a.out -e source_file.bmp secret_file.txt <output_file.bmp>\n");
+            printf("./a.out -d source_file.bmp <output_file.txt>\n");
             printf("\n");
             return e_failure;
         }
@@ -104,7 +104,7 @@ Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
     }
 
     printf("\nAll validation are passed successfully...\n");
-    
+
     //open three file(source,screte,output)
     if(open_files(encInfo)==e_failure)
     {

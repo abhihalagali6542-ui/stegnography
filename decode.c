@@ -65,7 +65,7 @@ Status open_decode_files(EncodeInfo *encInfo)
     encInfo->fptr_src_image = fopen(encInfo->src_image_fname,"r");
     if(encInfo->fptr_src_image==NULL)
     {
-        printf("Source file is not Opened..\n");
+        printf("Error : Source file is not Opened..\n");
         return e_failure;
     }
     
@@ -73,7 +73,7 @@ Status open_decode_files(EncodeInfo *encInfo)
     encInfo->fptr_stego_image = fopen(encInfo->stego_image_fname,"w");
     if(encInfo->fptr_stego_image==NULL)
     {
-        printf("Secret file is not Opended..\n");
+        printf("Error : output file is not Opended..\n");
         return e_failure;
     }
 
@@ -120,7 +120,7 @@ Status decode_magic_string(const char *magic_string, EncodeInfo *encInfo)
 
     if(strcmp(de_magic_buffer,magic_string)!=0)
     {
-        printf("\nMagic string doesnt match\n");
+        printf("\nError : Magic string doesnt match\n");
         return e_failure;
     }
     return e_success;
@@ -139,7 +139,6 @@ Status decode_size_to_lsb(char *image_buffer,int *data)
         j--;
     }
 
-    printf("%d\n",*data);
     return e_success;
 }
 
@@ -151,26 +150,87 @@ Status decode_secret_file_extn_size( EncodeInfo *encInfo)
     //read 32 bytes from src_file into buffer
     fread(buffer,32,1,encInfo->fptr_src_image);
     
-    //encode_size_to_lsb(strlen(extn_scr_file),buffer)
+    //decode_size_to_lsb(strlen(extn_scr_file),buffer)
     if(decode_size_to_lsb(buffer,&extn_size)==e_failure)
     {
-        printf("\nError : file extention decoding failed..\n");
+        printf("\nError : secret file extention decoding failed..\n");
         return e_failure;
     }
-
+    printf("\n%d\n",extn_size);
     if(extn_size!=4)
     {
-        printf("Error: file extention doesnot match");
+        printf("Error : secret file extention doesnot match");
         return e_failure;
     }
     
-    printf("\nfile extention decoded successfully...\n");
+    printf("\nsecret file extention size decoded successfully...\n");
     return e_success;
 }
 
-Status decode_secret_file_extn(const char *file_extn, EncodeInfo *encInfo)
+Status decode_secret_file_extn(EncodeInfo *encInfo)
 {
-  
+  char buffer[8];
+  char extn[4];
+    for(int i=0;i<4;i++)
+    {
+        char data=0;
+        //read 8 bytes from src_image
+        fread(buffer,8,1,encInfo->fptr_src_image);
+
+        //decode_byte_to_lsb
+        decode_byte_to_lsb(buffer,&data);
+
+        extn[i]=data;
+    }  
+    extn[4]='\0';
+    printf("\n%s\n",extn);
+
+    if(strcmp(extn,".txt")!=0)
+    {
+        printf("\nError : secret file extention doesnt match..\n");
+        return e_failure;
+    }
+    printf("\nsecret file extention decoded successfully...\n");
+    return e_success;
+}
+Status decode_secret_file_size(EncodeInfo *encInfo)
+{
+    char buffer[32];
+
+    int data=0;
+    // read 32 bytes from src image to buffer
+    fread(buffer,32,1,encInfo->fptr_src_image);
+
+    // decode size to lsb
+    decode_size_to_lsb(buffer,&data);
+
+   encInfo->size_secret_file=data;
+
+    printf("\n%ld\n",encInfo->size_secret_file);
+
+    printf("\nsecret file size decoded successfully...\n");
+    return e_success;
+}
+
+Status decode_secret_file_data(EncodeInfo *encInfo)
+{
+    char buffer[8];
+    int i=0;
+    while(i<encInfo->size_secret_file)
+    {
+        char data=0;
+        // read 8 bytes from src_file to buffer
+        fread(buffer,8,1,encInfo->fptr_src_image);
+
+        // decode_byte_to_lsb(data,buffer)
+        decode_byte_to_lsb(buffer &data);
+
+        // read 8 bytes from buffer to output file
+        fwrite(&data,1,1,encInfo->fptr_stego_image);
+    }
+
+    printf("\nSecret file data decoded successfully...\n");
+    return e_success;
 }
 
 Status do_decoding(EncodeInfo *encInfo)
@@ -188,16 +248,29 @@ Status do_decoding(EncodeInfo *encInfo)
     // decode file extention size
     if(decode_secret_file_extn_size(encInfo)==e_failure)
     {
-        printf("\nError : unable to decode file extention size..\n");
+        printf("\nError : unable to decode secret file extention size..\n");
         return e_failure;
     }
 
     // decode file extention 
-    if(encode_secret_file_extn(".txt", encInfo)==e_failure)
+    if(decode_secret_file_extn(encInfo)==e_failure)
     {
         printf("\nError : unable to decode secret file extention..\n");
         return e_failure;
     }
 
+    // decode file size
+    if(decode_secret_file_size(encInfo)==e_failure)
+    {
+        printf("\nError : unable to decode secret file size..\n");
+        return e_failure;
+    }
+
+    // decode file data
+    if(decode_secret_file_data(encInfo)==e_failure)
+    {
+        printf("\nError : unable to decode secret file data..\n");
+        return e_failure;
+    }
     return e_success;
 }
