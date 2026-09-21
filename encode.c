@@ -13,6 +13,8 @@
  * and height after that. size is 4 bytes
  */
 
+//-------------------------------------------------------------------------------//
+
 uint get_image_size_for_bmp(FILE *fptr_image)
 {
     uint width, height;
@@ -32,6 +34,8 @@ uint get_image_size_for_bmp(FILE *fptr_image)
     return width * height * 3;
 }
 
+//-------------------------------------------------------------------------------//
+
 uint get_file_size(FILE *fptr)
 {
     //move the offset to last pos
@@ -42,6 +46,8 @@ uint get_file_size(FILE *fptr)
     return ftell(fptr);
 }
 
+//-------------------------------------------------------------------------------//
+
 /* 
  * Get File pointers for i/p and o/p files
  * Inputs: Src Image file, Secret file and
@@ -50,49 +56,24 @@ uint get_file_size(FILE *fptr)
  * Return Value: e_success or e_failure, on file errors
  */
 
-/*Status open_files(EncodeInfo *encInfo)
-{
-    // Src Image file
-    encInfo->fptr_src_image = fopen(encInfo->src_image_fname, "r");
-    // Do Error handling
-    if (encInfo->fptr_src_image == NULL)
-    {
-    	perror("fopen");
-    	fprintf(stderr, "ERROR: Unable to open file %s\n", encInfo->src_image_fname);
-
-    	return e_failure;
-    }
-
-    // Secret file
-    encInfo->fptr_secret = fopen(encInfo->secret_fname, "r");
-    // Do Error handling
-    if (encInfo->fptr_secret == NULL)
-    {
-    	perror("fopen");
-    	fprintf(stderr, "ERROR: Unable to open file %s\n", encInfo->secret_fname);
-
-    	return e_failure;
-    }
-
-    // Stego Image file
-    encInfo->fptr_stego_image = fopen(encInfo->stego_image_fname, "w");
-    // Do Error handling
-    if (encInfo->fptr_stego_image == NULL)
-    {
-    	perror("fopen");
-    	fprintf(stderr, "ERROR: Unable to open file %s\n", encInfo->stego_image_fname);
-
-    	return e_failure;
-    }
-
-    // No failure return e_success
-    return e_success;
-}*/
-
 //-------------------------------------------------------------------------------//
 
 Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
 {
+    // CLA validation
+    for(int i=2;i<4;i++)
+    {
+        if(argv[i]==NULL)
+        {
+            printf("\nInvalid input\n");
+            printf("\n-------- SAMPLE INPUTS --------\n");
+            printf("\n./a.out -e source_file.bmp secret_file.txt [output_file(.bmp .py .txt)]\n");
+            printf("./a.out -d source_file.bmp [output_file(.bmp .py .txt)]\n");
+            printf("\n");
+            return e_failure;
+        }
+    }
+
     //check ".bmp" exatention at last
     char *dot=strrchr(argv[2],'.');
     if(dot==NULL || strcmp(dot,".bmp")!=0)
@@ -108,13 +89,22 @@ Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
     //check out file is given or not
     if(argv[4]!=NULL)
     {
-       encInfo->stego_image_fname=argv[4];
+        char *dot=strrchr(argv[4],'.');
+        if(dot==NULL || strcmp(dot,".bmp")!=0)
+        {
+            printf("\noutput file extention should me \".bmp\"..\n");
+                return e_failure;
+                //if not ".bp extaction is not there" return e_failure
+        }
+        encInfo->stego_image_fname=argv[4];
     }
     else
     {
         encInfo->stego_image_fname="output.bmp";
     }
 
+    printf("\nAll validation are passed successfully...\n");
+    
     //open three file(source,screte,output)
     if(open_files(encInfo)==e_failure)
     {
@@ -122,7 +112,6 @@ Status read_and_validate_encode_args(char *argv[], EncodeInfo *encInfo)
         return e_failure;
     }
 
-    printf("\nAll validation are passed successfully...\n");
     return e_success;
 }
 
@@ -172,7 +161,7 @@ Status do_encoding(EncodeInfo *encInfo)
     // copy bmp header
     if(copy_bmp_header(encInfo->fptr_src_image,encInfo->fptr_stego_image)==e_failure)
     {
-        printf("\nError : BMP Header does not copy..\n");
+        printf("\nError : unable to copy BMP Header..\n");
         return e_failure;
     }
 
@@ -239,7 +228,7 @@ Status check_capacity(EncodeInfo *encInfo)
         return e_failure;
     }
 
-    //printf("\n...\n");
+    printf("\nSufficient image capacity aavailable to store the screte file...\n");
     return e_success;
 }
 
@@ -258,7 +247,7 @@ Status copy_bmp_header(FILE *fptr_src_image, FILE *fptr_dest_image)
     //write 54 byts to dest file
     fwrite(buff,54,1,fptr_dest_image);
 
-    printf("\nBMP Header copied successfully...\n");
+    printf("\nbmp header copied successfully...\n");
     return e_success;
 }
 
@@ -373,6 +362,8 @@ Status encode_secret_file_extn(const char *file_extn, EncodeInfo *encInfo)
     return e_success;
 }
 
+//-------------------------------------------------------------------------------//
+
 Status encode_secret_file_size(int file_size, EncodeInfo *encInfo)
 {
     char buffer[32];
@@ -388,6 +379,8 @@ Status encode_secret_file_size(int file_size, EncodeInfo *encInfo)
     
     return e_success;
 }
+
+//-------------------------------------------------------------------------------//
 
 Status encode_secret_file_data(EncodeInfo *encInfo)
 {
@@ -410,6 +403,8 @@ Status encode_secret_file_data(EncodeInfo *encInfo)
     return e_success;
 }
 
+//-------------------------------------------------------------------------------//
+
 Status copy_remaining_img_data(FILE *fptr_src, FILE *fptr_dest)
 {
     char data;
@@ -420,6 +415,8 @@ Status copy_remaining_img_data(FILE *fptr_src, FILE *fptr_dest)
         fwrite(&data,1,1,fptr_dest);
     }
 
-    printf("\ncopied remaining img data successfully...\n");
+    printf("\nCopied remaining img data successfully...\n");
     return e_success;
 }
+
+//-------------------------------------------------------------------------------//

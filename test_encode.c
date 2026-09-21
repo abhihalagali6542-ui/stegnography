@@ -2,32 +2,58 @@
 #include "encode.h"
 #include "types.h"
 
+//-------------------------------------------------------------------------------//
+
 int main(int argc,char *argv[])
 {
     EncodeInfo encInfo;
-    
-   //check e or d from argv[1]
+
+   //check e or d from argv[1][1]
     if(check_operation_type(argv[1][1])==e_encode)
     {
-        read_and_validate_encode_args(argv, &encInfo);
+        if(read_and_validate_encode_args(argv, &encInfo)==e_failure)
+        {
+            printf("\nInvalid input..\n");
+            printf("\n");
+            return 0;
+        }
         if(do_encoding(&encInfo)==e_failure)
         {
             printf("\nError : unable to encode..\n");
+            return 0;
         }
-       printf("\nencoding done successfully...\n");
+       printf("\nEncoding done successfully...\n");
+       printf("\n");
        return 0;
     }
-   // else if(ret==e_decode)
-    //{ 
-    //}
+    else if(check_operation_type(argv[1][1])==e_decode)
+    { 
+        if(read_and_validate_decode_args(argv, &encInfo)==e_failure)
+        {
+            printf("\nInvalid input..\n");
+            printf("\n");
+            return 0;
+        }
+        if(do_decoding(&encInfo)==e_failure)
+        {
+            printf("\nError : unable to decode..\n");
+            return 0;
+        }
+    }
     else
     {
-        printf("Validation failed\n");
+        printf("\nValidation failed\n");
+        printf("\n-------- SAMPLE INPUTS --------\n");
+            printf("\n./a.out -e source_file.bmp secret_file.txt [output_file(.bmp .py .txt)]\n");
+            printf("./a.out -d source_file.bmp [output_file(.bmp .py .txt)]\n");
+            printf("\n");
         return 0;
     }
 
     return 0;
 }
+
+//-------------------------------------------------------------------------------//
 
 OperationType check_operation_type(char opt)
 {
@@ -44,3 +70,5 @@ OperationType check_operation_type(char opt)
         return e_unsupported;
     }
 }
+
+//-------------------------------------------------------------------------------//
