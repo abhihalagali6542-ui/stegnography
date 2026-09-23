@@ -39,6 +39,9 @@ int main(int argc,char *argv[])
             printf("\nError : unable to decode..\n");
             return 0;
         }
+       printf("\nDecoding done successfully...\n");
+       printf("\n");
+       return 0;
     }
     else
     {

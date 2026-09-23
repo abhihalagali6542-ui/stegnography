@@ -275,7 +275,7 @@ Status encode_magic_string(const char *magic_string, EncodeInfo *encInfo)
 
 //-------------------------------------------------------------------------------//
 
-Status encode_byte_to_lsb(char data, char *image_buffer)
+Status encode_byte_to_lsb(unsigned char data, char *image_buffer)
 {
     for(int i=7;i>=0;i--)
     {
@@ -385,13 +385,12 @@ Status encode_secret_file_size(int file_size, EncodeInfo *encInfo)
 Status encode_secret_file_data(EncodeInfo *encInfo)
 {
     char buffer[8];
-    char data;
-    
+    unsigned char data;
+    rewind(encInfo->fptr_secret);
     while(fread(&data,1,1,encInfo->fptr_secret)==1)
     {
         // read 8 bytes from src_file to buffer
         fread(buffer,8,1,encInfo->fptr_src_image);
-
         // encode_byte_to_lsb(data,buffer)
         encode_byte_to_lsb(data,buffer);
 
@@ -407,7 +406,7 @@ Status encode_secret_file_data(EncodeInfo *encInfo)
 
 Status copy_remaining_img_data(FILE *fptr_src, FILE *fptr_dest)
 {
-    char data;
+    unsigned char data;
 
     //read char from src_file and write to output_file untill EOF
     while(fread(&data,1,1,fptr_src)==1)

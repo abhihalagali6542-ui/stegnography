@@ -82,7 +82,7 @@ Status encode_secret_file_data(EncodeInfo *encInfo);
 Status encode_size_to_lsb(int size, char *image_buffer);
 
 /* Encode a byte into LSB of image data array */
-Status encode_byte_to_lsb(char data, char *image_buffer);
+Status encode_byte_to_lsb(unsigned char data, char *image_buffer);
 
 /* Copy remaining image bytes from src to stego image after encoding */
 Status copy_remaining_img_data(FILE *fptr_src, FILE *fptr_dest);
@@ -119,6 +119,6 @@ Status decode_secret_file_data(EncodeInfo *encInfo);
 Status decode_size_to_lsb(char *image_buffer,int *data);
 
 /* Decode a byte into LSB of image data array */
-Status decode_byte_to_lsb(char *image_buffer, char *data);
+Status decode_byte_to_lsb(char *image_buffer, unsigned char *data);
 
 #endif

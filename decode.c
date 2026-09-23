@@ -35,7 +35,7 @@ Status read_and_validate_decode_args(char *argv[], EncodeInfo *encInfo)
     //check out file is given or not
     if(argv[3]!=NULL)
     {
-        char name_buffer[5];
+        char name_buffer[20];
         sscanf(argv[3],"%[^.]",name_buffer);
         strcat(name_buffer,".txt");
         encInfo->stego_image_fname=name_buffer;
@@ -83,156 +83,6 @@ Status open_decode_files(EncodeInfo *encInfo)
 
 //-------------------------------------------------------------------------------//
 
-
-Status decode_byte_to_lsb(char *image_buffer, char *data)
-{
-    int j=7;
-    for(int i=0;i<8;i++)
-    {
-        // get the lsb bit set or not
-        if(image_buffer[i] & 1) // set the ith bit of data
-        {
-            *data = (*data) | (1<<j);
-        }
-        j--;
-    }
-
-    return e_success;
-}
-
-Status decode_magic_string(const char *magic_string, EncodeInfo *encInfo)
-{
-    char de_magic_buffer[2];
-    char image_buffer[8];
-
-    for(int i=0;i<2;i++)
-    {
-        char data=0;
-        
-        fread(image_buffer,8,1,encInfo->fptr_src_image);
-
-        decode_byte_to_lsb(image_buffer,&data);
-
-        printf("\n magic str = %c\n",data);
-        de_magic_buffer[i]=data;
-    }
-    de_magic_buffer[2]='\0';
-
-    if(strcmp(de_magic_buffer,magic_string)!=0)
-    {
-        printf("\nError : Magic string doesnt match\n");
-        return e_failure;
-    }
-    return e_success;
-}
-
-Status decode_size_to_lsb(char *image_buffer,int *data)
-{
-    int j=31;
-    for(int i=0;i<32;i++)
-    {
-        // get the lsb bit set or not
-        if(image_buffer[i] & 1) // set the ith bit of data
-        {
-            *data = (*data) | (1<<j) ;
-        }
-        j--;
-    }
-
-    return e_success;
-}
-
-Status decode_secret_file_extn_size( EncodeInfo *encInfo)
-{
-
-    char buffer[32];
-    int extn_size=0;
-    //read 32 bytes from src_file into buffer
-    fread(buffer,32,1,encInfo->fptr_src_image);
-    
-    //decode_size_to_lsb(strlen(extn_scr_file),buffer)
-    if(decode_size_to_lsb(buffer,&extn_size)==e_failure)
-    {
-        printf("\nError : secret file extention decoding failed..\n");
-        return e_failure;
-    }
-    printf("\n%d\n",extn_size);
-    if(extn_size!=4)
-    {
-        printf("Error : secret file extention doesnot match");
-        return e_failure;
-    }
-    
-    printf("\nsecret file extention size decoded successfully...\n");
-    return e_success;
-}
-
-Status decode_secret_file_extn(EncodeInfo *encInfo)
-{
-  char buffer[8];
-  char extn[4];
-    for(int i=0;i<4;i++)
-    {
-        char data=0;
-        //read 8 bytes from src_image
-        fread(buffer,8,1,encInfo->fptr_src_image);
-
-        //decode_byte_to_lsb
-        decode_byte_to_lsb(buffer,&data);
-
-        extn[i]=data;
-    }  
-    extn[4]='\0';
-    printf("\n%s\n",extn);
-
-    if(strcmp(extn,".txt")!=0)
-    {
-        printf("\nError : secret file extention doesnt match..\n");
-        return e_failure;
-    }
-    printf("\nsecret file extention decoded successfully...\n");
-    return e_success;
-}
-Status decode_secret_file_size(EncodeInfo *encInfo)
-{
-    char buffer[32];
-
-    int data=0;
-    // read 32 bytes from src image to buffer
-    fread(buffer,32,1,encInfo->fptr_src_image);
-
-    // decode size to lsb
-    decode_size_to_lsb(buffer,&data);
-
-   encInfo->size_secret_file=data;
-
-    printf("\n%ld\n",encInfo->size_secret_file);
-
-    printf("\nsecret file size decoded successfully...\n");
-    return e_success;
-}
-
-Status decode_secret_file_data(EncodeInfo *encInfo)
-{
-    char buffer[8];
-    int i=0;
-    while(i<encInfo->size_secret_file)
-    {
-        char data=0;
-        // read 8 bytes from src_file to buffer
-        fread(buffer,8,1,encInfo->fptr_src_image);
-
-        // decode_byte_to_lsb(data,buffer)
-        decode_byte_to_lsb(buffer &data);
-
-        // read 8 bytes from buffer to output file
-        fwrite(&data,1,1,encInfo->fptr_stego_image);
-    }
-
-    printf("\nSecret file data decoded successfully...\n");
-    return e_success;
-}
-
 Status do_decoding(EncodeInfo *encInfo)
 {
     fseek(encInfo->fptr_src_image,54,SEEK_SET);
@@ -274,3 +124,175 @@ Status do_decoding(EncodeInfo *encInfo)
     }
     return e_success;
 }
+
+//-------------------------------------------------------------------------------//
+
+Status decode_byte_to_lsb(char *image_buffer, unsigned char *data)
+{
+    int j=7;
+    *data=0;
+    for(int i=0;i<8;i++)
+    {
+        // get the lsb bit set or not
+        if(image_buffer[i] & 1) // set the ith bit of data
+        {
+            *data = (*data) | (1<<j);
+        }
+        j--;
+    }
+
+    return e_success;
+}
+
+//-------------------------------------------------------------------------------//
+
+Status decode_magic_string(const char *magic_string, EncodeInfo *encInfo)
+{
+    char de_magic_buffer[2];
+    char image_buffer[8];
+
+    for(int i=0;i<2;i++)
+    {
+        char data=0;
+        
+        fread(image_buffer,8,1,encInfo->fptr_src_image);
+
+        decode_byte_to_lsb(image_buffer,&data);
+
+        printf("\n magic str = %c\n",data);
+        de_magic_buffer[i]=data;
+    }
+    de_magic_buffer[2]='\0';
+
+    if(strcmp(de_magic_buffer,magic_string)!=0)
+    {
+        printf("\nError : Magic string doesnt match\n");
+        return e_failure;
+    }
+    return e_success;
+}
+
+//-------------------------------------------------------------------------------//
+
+Status decode_size_to_lsb(char *image_buffer,int *data)
+{
+    int j=31;
+    for(int i=0;i<32;i++)
+    {
+        // get the lsb bit set or not
+        if(image_buffer[i] & 1) // set the ith bit of data
+        {
+            *data = (*data) | (1<<j) ;
+        }
+        j--;
+    }
+
+    return e_success;
+}
+
+//-------------------------------------------------------------------------------//
+
+Status decode_secret_file_extn_size( EncodeInfo *encInfo)
+{
+
+    char buffer[32];
+    int extn_size=0;
+    //read 32 bytes from src_file into buffer
+    fread(buffer,32,1,encInfo->fptr_src_image);
+    
+    //decode_size_to_lsb(strlen(extn_scr_file),buffer)
+    if(decode_size_to_lsb(buffer,&extn_size)==e_failure)
+    {
+        printf("\nError : secret file extention decoding failed..\n");
+        return e_failure;
+    }
+    printf("\n%d\n",extn_size);
+    if(extn_size!=4)
+    {
+        printf("Error : secret file extention doesnot match");
+        return e_failure;
+    }
+    
+    printf("\nsecret file extention size decoded successfully...\n");
+    return e_success;
+}
+
+//-------------------------------------------------------------------------------//
+
+Status decode_secret_file_extn(EncodeInfo *encInfo)
+{
+  char buffer[8];
+  char extn[4];
+    for(int i=0;i<4;i++)
+    {
+        char data=0;
+        //read 8 bytes from src_image
+        fread(buffer,8,1,encInfo->fptr_src_image);
+
+        //decode_byte_to_lsb
+        decode_byte_to_lsb(buffer,&data);
+
+        extn[i]=data;
+    }  
+    extn[4]='\0';
+    printf("\n%s\n",extn);
+
+    if(strcmp(extn,".txt")!=0)
+    {
+        printf("\nError : secret file extention doesnt match..\n");
+        return e_failure;
+    }
+    printf("\nsecret file extention decoded successfully...\n");
+    return e_success;
+}
+
+//-------------------------------------------------------------------------------//
+
+Status decode_secret_file_size(EncodeInfo *encInfo)
+{
+    char buffer[32];
+
+    int data=0;
+    // read 32 bytes from src image to buffer
+    fread(buffer,32,1,encInfo->fptr_src_image);
+
+    // decode size to lsb
+    decode_size_to_lsb(buffer,&data);
+
+   encInfo->size_secret_file=data;
+
+    printf("\n%ld\n",encInfo->size_secret_file);
+
+    printf("\nsecret file size decoded successfully...\n");
+    return e_success;
+}
+
+//-------------------------------------------------------------------------------//
+
+Status decode_secret_file_data(EncodeInfo *encInfo)
+{
+    char buffer[8];
+    char output[50];
+    int i=0;
+    char data;
+
+    for(i=0;i<encInfo->size_secret_file;i++)
+    {
+        //read 8 bytes from src_image
+        fread(buffer,8,1,encInfo->fptr_src_image);
+
+        //decode_byte_to_lsb
+        decode_byte_to_lsb(buffer,&data);
+
+        output[i]=data;
+        
+       fwrite(&data,1,1,encInfo->fptr_stego_image);
+    }
+    output[i+1]='\0';
+    printf("\n%s\n",output);
+
+    printf("\nSecret file data decoded successfully...\n");
+    return e_success;
+}
+
+//-------------------------------------------------------------------------------//
